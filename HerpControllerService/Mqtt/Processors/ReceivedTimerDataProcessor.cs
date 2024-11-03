@@ -24,6 +24,6 @@ public class ReceivedTimerDataProcessor(ILogger<ReceivedTimerDataProcessor> logg
             return;
         }
 
-        await timerPinStateService.CreateTimerPinState(device, timerData.Pin, timerData.State);
+        await timerPinStateService.CreateTimerPinState(device, timerData.Pin, timerData.State == 1);
     }
 }
