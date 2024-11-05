@@ -8,7 +8,7 @@ public class ReceivedTimerDataProcessor(ILogger<ReceivedTimerDataProcessor> logg
 {
     public async Task Process(string deviceHardwareName, string message)
     {
-        var timerData = JsonConvert.DeserializeObject<DeviceTimerEventModel>(message);
+        var timerData = JsonConvert.DeserializeObject<DeviceTimerResponseModel>(message)?.Timer;
 
         if (timerData == null)
         {
