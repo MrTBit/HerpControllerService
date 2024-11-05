@@ -12,7 +12,7 @@ public class SensorReadingEntity : BaseEntity
     public long SensorId { get; set; }
     public SensorEntity? Sensor { get; set; }
     
-    [Column("type")]
+    [Column("type", TypeName = "varchar(64)")]
     [Required]
     public SensorReadingType Type { get; set; }
     

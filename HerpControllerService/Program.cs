@@ -12,7 +12,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
-builder.WebHost.UseUrls("https://localhost:7000", "http://localhost:7001");
+builder.WebHost.UseUrls("http://0.0.0.0:7001");
 builder.Logging.ClearProviders();
 builder.Logging.AddConsole();
 
@@ -127,8 +127,6 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
-
-app.UseHttpsRedirection();
 
 app.UseAuthorization();
 
