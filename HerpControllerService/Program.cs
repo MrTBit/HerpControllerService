@@ -98,13 +98,15 @@ builder.Services.AddSwaggerGen(c =>
 
 //Register Services
 builder.Services.AddSingleton<MqttService>();
-builder.Services.AddHostedService<MqttService>(p => p.GetRequiredService<MqttService>());
+// builder.Services.AddHostedService<MqttService>(p => p.GetRequiredService<MqttService>());
 
 builder.Services.AddScoped<AuthenticationService>();
 builder.Services.AddScoped<SensorService>();
 builder.Services.AddScoped<SensorReadingService>();
 builder.Services.AddScoped<DeviceService>();
 builder.Services.AddScoped<TimerPinStateService>();
+builder.Services.AddScoped<AlertService>();
+builder.Services.AddSingleton<TelegramService>();
 
 //MQTT processors
 builder.Services.AddScoped<ReceivedSensorDataProcessor>();

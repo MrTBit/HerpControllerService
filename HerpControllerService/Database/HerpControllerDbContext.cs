@@ -10,5 +10,6 @@ public class HerpControllerDbContext(DbContextOptions<HerpControllerDbContext> o
     public DbSet<SensorEntity> Sensors { get; set; }
     public DbSet<SensorReadingEntity> SensorReadings { get; set; }
     public DbSet<TimerPinStateEntity> TimerPinStates { get; set; }
+    public DbSet<AlertEntity> Alerts { get; set; }
     
 }
