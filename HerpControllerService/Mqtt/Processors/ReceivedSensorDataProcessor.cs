@@ -1,16 +1,16 @@
-﻿using HerpControllerService.Enums;
+﻿using HerpControllerService.Entities;
+using HerpControllerService.Enums;
 using HerpControllerService.Models;
 using HerpControllerService.Models.Device;
 using HerpControllerService.Services;
 using HerpControllerService.SignalR;
-using Microsoft.AspNetCore.SignalR;
 using Newtonsoft.Json;
 
 namespace HerpControllerService.mqtt.Processors;
 
-public class ReceivedSensorDataProcessor(ILogger<ReceivedSensorDataProcessor> logger, DeviceService deviceService, SensorService sensorService, SensorReadingService sensorReadingService, RealTimeHubSender hubSender)
+public class ReceivedSensorDataProcessor(ILogger<ReceivedSensorDataProcessor> logger, DeviceService deviceService, SensorService sensorService, SensorReadingService sensorReadingService, RealTimeHubSender hubSender, AlertService alertService)
 {
-    public async Task Process(string deviceHardwareName, string message)
+    public async Task Process(MqttService mqttService, string deviceHardwareName, string message)
     {
         var sensorData = JsonConvert.DeserializeObject<DeviceSensorDataModel>(message);
 
@@ -27,6 +27,8 @@ public class ReceivedSensorDataProcessor(ILogger<ReceivedSensorDataProcessor> lo
             logger.LogWarning("Received message from device {deviceId} not found in db.", deviceHardwareName);
             return;
         }
+        
+        mqttService.AddOrResetTimer(device);
 
         var realTimeSensorDataModel = new RealTimeSensorDataModel
         {
@@ -44,6 +46,8 @@ public class ReceivedSensorDataProcessor(ILogger<ReceivedSensorDataProcessor> lo
                 ds18BSensorData.DeviceAddress,
                 SensorType.DS18B);
 
+            await CheckSensorAlert(sensor, ds18BSensorData.Temperature, null);
+            
             await sensorReadingService.CreateSensorReading(
                 sensor, 
                 ds18BSensorData.Temperature,
@@ -68,6 +72,8 @@ public class ReceivedSensorDataProcessor(ILogger<ReceivedSensorDataProcessor> lo
                 SensorType.DHT
             );
 
+            await CheckSensorAlert(sensor, dhtSensorData.Temperature, dhtSensorData.Humidity);
+            
             await sensorReadingService.CreateSensorReading(
                 sensor,
                 dhtSensorData.Temperature,
@@ -91,5 +97,43 @@ public class ReceivedSensorDataProcessor(ILogger<ReceivedSensorDataProcessor> lo
         await hubSender.BroadcastRealTimeSensorData(realTimeSensorDataModel);
         
         await sensorReadingService.SaveChanges();
+    }
+
+    private async Task CheckSensorAlert(SensorEntity sensor, double temperature, double? humidity)
+    {
+        var sensorAlertData = new List<SensorAlertData>();
+        
+        if (sensor.MinimumTemperature.HasValue && temperature < sensor.MinimumTemperature)
+        {
+            sensorAlertData.Add(new SensorAlertData{AlertType = AlertType.LOW_TEMP, Value = temperature});
+        } else if (sensor.MaximumTemperature.HasValue && temperature > sensor.MaximumTemperature)
+        {
+            sensorAlertData.Add(new SensorAlertData{AlertType = AlertType.HIGH_TEMP, Value = temperature});
+        } else if (humidity.HasValue)
+        {
+            if (sensor.MinimumHumidity.HasValue && humidity < sensor.MinimumHumidity)
+            {
+                sensorAlertData.Add(new SensorAlertData{AlertType = AlertType.LOW_HUMIDITY, Value = humidity.Value});
+            } else if (sensor.MaximumHumidity.HasValue && humidity > sensor.MaximumHumidity)
+            {
+                sensorAlertData.Add(new SensorAlertData{AlertType = AlertType.HIGH_HUMIDITY, Value = humidity.Value});
+            }
+        }
+
+        if (sensorAlertData.Count == 0)
+        {
+            return;
+        }
+
+        foreach (var alertData in sensorAlertData)
+        {
+            await alertService.CreateSensorAlert(sensor, alertData.AlertType, alertData.Value);
+        }
+    }
+    
+    private record SensorAlertData
+    {
+        public AlertType AlertType { get; init; }
+        public double Value { get; init; }
     }
 }

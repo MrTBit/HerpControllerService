@@ -37,7 +37,7 @@ public class AlertController(ILogger<AlertController> logger, AlertService alert
         await this.BuildResponseAsync(
             async () =>
             {
-                await telegramService.SendAlertAsync(-1, message);
+                await telegramService.SendAlertAsync(-1, message, false);
                 return Ok();
             });
 }

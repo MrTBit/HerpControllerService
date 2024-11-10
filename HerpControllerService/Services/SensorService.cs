@@ -37,6 +37,10 @@ public class SensorService(HerpControllerDbContext db)
         }
         
         sensor.Name = model.Name;
+        sensor.MinimumTemperature = model.MinimumTemperature;
+        sensor.MaximumTemperature = model.MaximumTemperature;
+        sensor.MinimumHumidity = model.MinimumHumidity;
+        sensor.MaximumHumidity = model.MaximumHumidity;
         sensor.ModifiedAt = DateTime.UtcNow;
 
         await db.SaveChangesAsync();

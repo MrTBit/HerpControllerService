@@ -1,5 +1,6 @@
 ﻿using System.Text;
 using HerpControllerService.Database;
+using HerpControllerService.Entities;
 using HerpControllerService.Enums;
 using HerpControllerService.Models.Device;
 using HerpControllerService.mqtt.Processors;
@@ -18,6 +19,8 @@ public class MqttService : BackgroundService
     private readonly ILogger _logger;
     private readonly IConfiguration _configuration;
     private readonly IServiceProvider _services;
+
+    private readonly Dictionary<long, Timer> _deviceTimers = new();
 
     private const string ALL_DEVICE_COMMAND_TOPIC = "herpcontroller/devices/all_commands";
     
@@ -69,6 +72,14 @@ public class MqttService : BackgroundService
                 topics.Add($"herpcontroller/devices/{deviceName}/sensor_data");
                 topics.Add($"herpcontroller/devices/{deviceName}/timer_data");
                 topics.Add($"herpcontroller/devices/{deviceName}/data");
+            }
+
+            var alertService = scope.ServiceProvider.GetRequiredService<AlertService>();
+            var activeAlerts = await alertService.GetActiveAlerts(AlertType.DEVICE_MISSING);
+
+            foreach (var activeAlert in activeAlerts)
+            {
+                AddOrResetTimer(activeAlert.Device!);
             }
         }
         
@@ -170,6 +181,31 @@ public class MqttService : BackgroundService
             JsonConvert.SerializeObject(new { command = DeviceCommand.SEND_TIMER_STATES, requesterId }));
     }
 
+    public void AddOrResetTimer(DeviceEntity device)
+    {
+        if (_deviceTimers.TryGetValue(device.Id, out var timer))
+        {
+            timer.Change(60000, Timeout.Infinite);
+        }
+        else
+        {
+            _deviceTimers.Add(
+                device.Id,
+                new Timer(
+                    _ =>
+                    {
+                        using var scope = _services.CreateScope();
+                        var alertService = scope.ServiceProvider.GetRequiredService<AlertService>();
+                        alertService.CreateDeviceNotReportingAlert(device).GetAwaiter().GetResult();
+                        
+                        _deviceTimers[device.Id].Change(60000, Timeout.Infinite);
+                    },
+                    null,
+                    60000,
+                    Timeout.Infinite));
+        }
+    }
+
     private void StartProcessing(CancellationToken cancellationToken)
     {
         var concurrent = new SemaphoreSlim(2, 4);
@@ -207,7 +243,7 @@ public class MqttService : BackgroundService
                             case "sensor_data":
                             {
                                 var processor = scope.ServiceProvider.GetRequiredService<ReceivedSensorDataProcessor>();
-                                await processor.Process(deviceHardwareName, message);
+                                await processor.Process(this, deviceHardwareName, message);
                                 break;
                             }
                             case "timer_data":

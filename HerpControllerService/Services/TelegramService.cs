@@ -10,27 +10,31 @@ public class TelegramService
     private readonly TelegramBotClient _bot;
     private readonly ChatId _chatId;
 
-    private readonly AlertService _alertService;
+    private readonly IServiceProvider _services;
 
-    public TelegramService(IConfiguration configuration, AlertService alertService)
+    public TelegramService(IConfiguration configuration, IServiceProvider serviceProvider)
     {
+        _services = serviceProvider;
         _bot = new(configuration["Telegram:BotToken"]!);
         _chatId = new(Convert.ToInt64(configuration["Telegram:ChatId"]!));
-
+        
         _bot.OnUpdate += OnUpdate;
     }
     
-    public async Task SendAlertAsync(long alertId, string message)
+    public async Task SendAlertAsync(long alertId, string message, bool isReminder)
     {
         await _bot.SendMessage(_chatId, message, ParseMode.Html, protectContent: true,
-            replyMarkup: new InlineKeyboardMarkup().AddButton("Acknowledge", alertId.ToString()));
+            replyMarkup: isReminder ? null : new InlineKeyboardMarkup().AddButton("Acknowledge", alertId.ToString()));
     }
 
     private async Task HandleCallback(CallbackQuery callbackQuery)
     {
         await _bot.AnswerCallbackQuery(callbackQuery.Id, "Acknowledged");
+        await _bot.EditMessageReplyMarkup(_chatId, callbackQuery.Message!.Id);
 
-        await _alertService.AcknowledgeAlert(Convert.ToInt64(callbackQuery.Data));
+        using var services = _services.CreateScope();
+        var alertService = services.ServiceProvider.GetRequiredService<AlertService>();
+        await alertService.AcknowledgeAlert(Convert.ToInt64(callbackQuery.Data));
     }
     
     private async Task OnUpdate(Update update)

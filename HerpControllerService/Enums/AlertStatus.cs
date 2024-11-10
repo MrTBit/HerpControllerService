@@ -2,5 +2,5 @@
 
 public enum AlertStatus
 {
-    ACTIVE, ACKNOWLEDGED, DISMISSED
+    CREATED, ACKNOWLEDGED, DISMISSED
 }

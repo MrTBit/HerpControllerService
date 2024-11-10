@@ -24,6 +24,18 @@ public class SensorEntity : BaseEntity
     [Column("type", TypeName = "varchar(64)")]
     [Required]
     public SensorType Type { get; set; }
+    
+    [Column("min_t")]
+    public double? MinimumTemperature { get; set; }
+    
+    [Column("max_t")]
+    public double? MaximumTemperature { get; set; }
+    
+    [Column("min_h")]
+    public double? MinimumHumidity { get; set; }
+    
+    [Column("max_h")]
+    public double? MaximumHumidity { get; set; }
 
     public static implicit operator SensorModel(SensorEntity entity)
     {

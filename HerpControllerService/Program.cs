@@ -98,7 +98,7 @@ builder.Services.AddSwaggerGen(c =>
 
 //Register Services
 builder.Services.AddSingleton<MqttService>();
-// builder.Services.AddHostedService<MqttService>(p => p.GetRequiredService<MqttService>());
+builder.Services.AddHostedService<MqttService>(p => p.GetRequiredService<MqttService>());
 
 builder.Services.AddScoped<AuthenticationService>();
 builder.Services.AddScoped<SensorService>();
@@ -119,6 +119,9 @@ builder.Services.AddScoped<RealTimeHubSender>();
 builder.Services.AddScoped<DeviceCommandResponseSender>();
 
 var app = builder.Build();
+
+//Initialize Telegram Service to receive events
+app.Services.GetRequiredService<TelegramService>();
 
 app.MapHub<RealTimeHub>("/sensorData");
 app.MapHub<DeviceCommandHub>("/deviceCommands");
