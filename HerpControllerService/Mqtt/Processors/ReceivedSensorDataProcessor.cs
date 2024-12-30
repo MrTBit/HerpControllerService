@@ -32,7 +32,7 @@ public class ReceivedSensorDataProcessor(ILogger<ReceivedSensorDataProcessor> lo
 
         var realTimeSensorDataModel = new RealTimeSensorDataModel
         {
-            deviceId = device.Id,
+            DeviceId = device.Id,
             SensorData = []
         };
         

@@ -18,6 +18,18 @@ builder.Logging.AddConsole();
 
 builder.Services.AddSignalR().AddMessagePackProtocol();
 
+builder.Services.AddCors(options =>
+{
+    options.AddDefaultPolicy(b =>
+    {
+        b.AllowAnyOrigin()
+            .AllowCredentials()
+            .AllowAnyHeader()
+            .SetIsOriginAllowed(_ => true)
+            .AllowAnyMethod();
+    });
+});
+
 // Add services to the container.
 builder.Services.AddDbContextFactory<HerpControllerDbContext>(
     options => options.UseNpgsql(builder.Configuration["ConnectionString"],

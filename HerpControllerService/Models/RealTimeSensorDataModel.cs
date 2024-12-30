@@ -2,7 +2,7 @@
 
 public class RealTimeSensorDataModel
 {
-    public long deviceId { get; set; }
+    public long DeviceId { get; set; }
     public List<RealTimeSensorReadingModel> SensorData { get; set; } = [];
 }
 
