@@ -20,14 +20,16 @@ builder.Services.AddSignalR().AddMessagePackProtocol();
 
 builder.Services.AddCors(options =>
 {
-    options.AddDefaultPolicy(b =>
-    {
-        b.AllowAnyOrigin()
-            .AllowCredentials()
-            .AllowAnyHeader()
-            .SetIsOriginAllowed(_ => true)
-            .AllowAnyMethod();
-    });
+    options.AddPolicy(
+        "AllowAll",
+        b =>
+        {
+            b.AllowAnyOrigin()
+                .AllowCredentials()
+                .AllowAnyHeader()
+                .SetIsOriginAllowed(_ => true)
+                .AllowAnyMethod();
+        });
 });
 
 // Add services to the container.
@@ -148,5 +150,7 @@ if (app.Environment.IsDevelopment())
 app.UseAuthorization();
 
 app.MapControllers();
+
+app.UseCors("AllowAll");
 
 app.Run();
