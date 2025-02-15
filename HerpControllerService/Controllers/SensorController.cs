@@ -9,11 +9,11 @@ namespace HerpControllerService.Controllers;
 [Route("sensors")]
 public class SensorController(ILogger<SensorController> logger, SensorService sensorService) : BaseController(logger)
 {
-    [HttpPut]
-    public async Task<ActionResult<SensorModel>> Update([FromBody]SensorModel model) => await this.BuildResponseAsync<SensorModel>(
+    [HttpPut("{id:long}")]
+    public async Task<ActionResult<SensorModel>> Update(long id, [FromBody]SensorModel model) => await this.BuildResponseAsync<SensorModel>(
         async () =>
         {
-            if (model == null || model.Id == null || model.Name == null)
+            if (model == null || model.Id == null || model.Name == null || model.Id != id)
             {
                 return BadRequest();
             }

@@ -24,7 +24,8 @@ builder.Services.AddCors(options =>
         "AllowAll",
         b =>
         {
-            b.AllowCredentials()
+            b.WithOrigins(["https://herpcontroller.mrtbit.com", "localhost"])
+                .AllowCredentials()
                 .AllowAnyHeader()
                 .SetIsOriginAllowed(_ => true)
                 .AllowAnyMethod();
@@ -133,6 +134,8 @@ builder.Services.AddScoped<DeviceCommandResponseSender>();
 
 var app = builder.Build();
 
+app.UseCors("AllowAll");
+
 //Initialize Telegram Service to receive events
 app.Services.GetRequiredService<TelegramService>();
 
@@ -149,7 +152,5 @@ if (app.Environment.IsDevelopment())
 app.UseAuthorization();
 
 app.MapControllers();
-
-app.UseCors("AllowAll");
 
 app.Run();

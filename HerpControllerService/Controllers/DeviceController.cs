@@ -5,10 +5,10 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace HerpControllerService.Controllers;
 
-[Authorize]
 [Route("devices")]
 public class DeviceController(ILogger<DeviceController> logger, DeviceService deviceService) : BaseController(logger)
 {
+    [AllowAnonymous]
     [HttpGet("all")]
     public async Task<ActionResult<List<DeviceModel>>> GetAllDevices() => await this.BuildResponseAsync<List<DeviceModel>>(
         async () =>
@@ -16,6 +16,7 @@ public class DeviceController(ILogger<DeviceController> logger, DeviceService de
             return Ok((await deviceService.GetDevices(null)).Select(d => (DeviceModel)d).ToList());
         });
 
+    [Authorize]
     [HttpGet("by-id")]
     public async Task<ActionResult<List<DeviceModel>>> GetByIds([FromQuery] List<long> ids) =>
         await this.BuildResponseAsync<List<DeviceModel>>(
@@ -29,12 +30,13 @@ public class DeviceController(ILogger<DeviceController> logger, DeviceService de
                 return Ok((await deviceService.GetDevices(ids)).Select(d => (DeviceModel)d).ToList());
             });
 
-    [HttpPut]
-    public async Task<ActionResult<DeviceModel>> Update([FromBody]DeviceModel deviceModel) =>
+    [Authorize]
+    [HttpPut("{id:long}")]
+    public async Task<ActionResult<DeviceModel>> Update(long id, [FromBody]DeviceModel deviceModel) =>
         await this.BuildResponseAsync<DeviceModel>(
             async () =>
             {
-                if (deviceModel == null || deviceModel.Id == null || deviceModel.Name == null)
+                if (deviceModel == null || deviceModel.Id == null || deviceModel.Name == null || id != deviceModel.Id)
                 {
                     return BadRequest();
                 }
