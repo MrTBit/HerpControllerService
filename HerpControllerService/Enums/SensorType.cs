@@ -3,5 +3,6 @@
 public enum SensorType
 {
     DHT,
-    DS18B
+    DS18B,
+    SHT
 }

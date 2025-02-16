@@ -38,7 +38,7 @@ public class ReceivedSensorDataProcessor(ILogger<ReceivedSensorDataProcessor> lo
         
         foreach (var ds18BSensorData in sensorData.Ds18BSensors ?? [])
         {
-            var sensor = device.Sensors?.FirstOrDefault(s => s.HardwareId == ds18BSensorData.DeviceAddress);
+            var sensor = device.Sensors?.FirstOrDefault(s => s.HardwareId == ds18BSensorData.DeviceAddress && s.Type == SensorType.DS18B);
             
             sensor ??= await sensorService.CreateSensor(
                 device, 
@@ -63,7 +63,7 @@ public class ReceivedSensorDataProcessor(ILogger<ReceivedSensorDataProcessor> lo
 
         foreach (var dhtSensorData in sensorData.DhtSensors ?? [])
         {
-            var sensor = device.Sensors?.FirstOrDefault(s => s.HardwareId == dhtSensorData.Pin.ToString());
+            var sensor = device.Sensors?.FirstOrDefault(s => s.HardwareId == dhtSensorData.Pin.ToString() && s.Type == SensorType.DHT);
             
             sensor ??= await sensorService.CreateSensor(
                 device,
@@ -91,6 +91,39 @@ public class ReceivedSensorDataProcessor(ILogger<ReceivedSensorDataProcessor> lo
                 SensorId = sensor.Id,
                 Humidity = dhtSensorData.Humidity,
                 Temperature = dhtSensorData.Temperature
+            });
+        }
+        
+        foreach (var shtSensorData in sensorData.ShtSensors ?? [])
+        {
+            var sensor = device.Sensors?.FirstOrDefault(s => s.HardwareId == shtSensorData.Bus.ToString() && s.Type == SensorType.SHT);
+            
+            sensor ??= await sensorService.CreateSensor(
+                device,
+                shtSensorData.Bus.ToString(),
+                shtSensorData.Bus.ToString(),
+                SensorType.SHT
+            );
+
+            await CheckSensorAlert(sensor, shtSensorData.Temperature, shtSensorData.Humidity);
+            
+            await sensorReadingService.CreateSensorReading(
+                sensor,
+                shtSensorData.Temperature,
+                SensorReadingType.TEMPERATURE,
+                false);
+
+            await sensorReadingService.CreateSensorReading(
+                sensor,
+                shtSensorData.Humidity,
+                SensorReadingType.HUMIDITY,
+                false);
+            
+            realTimeSensorDataModel.SensorData.Add(new RealTimeSensorReadingModel
+            {
+                SensorId = sensor.Id,
+                Humidity = shtSensorData.Humidity,
+                Temperature = shtSensorData.Temperature
             });
         }
 

@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using HerpControllerService.Enums;
 using HerpControllerService.Models.API;
 
 namespace HerpControllerService.Entities;
@@ -14,6 +15,10 @@ public class DeviceEntity : BaseEntity
     [Column("name")]
     [Required]
     public string Name { get; set; } = null!; // User set name
+    
+    [Required]
+    [Column("status", TypeName = "varchar(64)")]
+    public DeviceStatus Status { get; set; }
     
     public ICollection<SensorEntity>? Sensors { get; set; }
 

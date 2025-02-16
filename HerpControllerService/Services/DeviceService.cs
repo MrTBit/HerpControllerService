@@ -1,6 +1,7 @@
 ﻿using System.Net;
 using HerpControllerService.Database;
 using HerpControllerService.Entities;
+using HerpControllerService.Enums;
 using HerpControllerService.Exceptions;
 using HerpControllerService.Models.API;
 using Microsoft.EntityFrameworkCore;
@@ -20,7 +21,8 @@ public class DeviceService(HerpControllerDbContext db)
         {
             HardwareId = hardwareId,
             Name = hardwareId,
-            CreatedAt = DateTime.UtcNow
+            CreatedAt = DateTime.UtcNow,
+            Status = DeviceStatus.ACTIVE
         };
         
         db.Devices.Add(device);
@@ -42,7 +44,10 @@ public class DeviceService(HerpControllerDbContext db)
                 .Where(d => deviceIds!.Contains(d.Id)).ToListAsync();
         }
 
-        return await db.Devices.Include(d => d.Sensors).ToListAsync();
+        return await db.Devices
+            .Include(d => d.Sensors)
+            .Where(d => d.Status == DeviceStatus.ACTIVE)
+            .ToListAsync();
     }
 
     public async Task<DeviceEntity> UpdateDevice(DeviceModel deviceModel)
